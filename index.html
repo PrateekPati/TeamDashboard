@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Team Task Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f5f4;
+    --bg-tertiary: #eeede9;
+    --bg-info: #e6f1fb;
+    --bg-success: #e1f5ee;
+    --bg-danger: #fcebeb;
+    --text: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-tertiary: #888780;
+    --text-info: #185fa5;
+    --text-success: #0f6e56;
+    --text-danger: #a32d2d;
+    --border: rgba(0,0,0,0.12);
+    --border-md: rgba(0,0,0,0.22);
+    --border-strong: rgba(0,0,0,0.35);
+    --border-info: rgba(24,95,165,0.4);
+    --border-success: rgba(15,110,86,0.4);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg-secondary: #252523;
+      --bg-tertiary: #2e2e2b;
+      --bg-info: #0c2240;
+      --bg-success: #062a1e;
+      --bg-danger: #2a0e0e;
+      --text: #e8e7e2;
+      --text-secondary: #a8a79f;
+      --text-tertiary: #6e6d68;
+      --text-info: #85b7eb;
+      --text-success: #5dcaa5;
+      --text-danger: #f09595;
+      --border: rgba(255,255,255,0.1);
+      --border-md: rgba(255,255,255,0.18);
+      --border-strong: rgba(255,255,255,0.28);
+      --border-info: rgba(133,183,235,0.4);
+      --border-success: rgba(93,202,165,0.4);
+    }
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg-tertiary);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  header h1 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  header h1 i { font-size: 18px; color: var(--text-secondary); }
+
+  .header-meta { font-size: 12px; color: var(--text-tertiary); }
+
+  #add-employee-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; font-size: 13px; font-weight: 500;
+    background: var(--bg); border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-md); color: var(--text);
+    cursor: pointer; transition: background 0.15s;
+  }
+  #add-employee-btn:hover { background: var(--bg-secondary); }
+
+  main { padding: 1.5rem 2rem; }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+
+  .empty-board {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 0;
+    color: var(--text-tertiary);
+    font-size: 14px;
+  }
+
+  .employee-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    transition: border-color 0.15s;
+  }
+  .employee-card.drag-over {
+    border-color: var(--border-info);
+    background: var(--bg-info);
+  }
+
+  .card-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 500; flex-shrink: 0;
+  }
+
+  .card-name {
+    font-size: 14px; font-weight: 500; color: var(--text);
+    flex: 1; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .delete-employee {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-tertiary); display: flex; align-items: center;
+    padding: 2px; border-radius: 4px; opacity: 0; transition: opacity 0.15s;
+  }
+  .employee-card:hover .delete-employee { opacity: 1; }
+  .delete-employee:hover { color: var(--text-danger); }
+
+  .tasks { display: flex; flex-direction: column; gap: 6px; min-height: 28px; }
+
+  .task-item {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 8px;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 12px; color: var(--text);
+    cursor: grab; user-select: none;
+    transition: border-color 0.15s, opacity 0.3s, max-height 0.35s ease, padding 0.3s ease;
+    max-height: 60px; overflow: hidden;
+  }
+  .task-item:active { cursor: grabbing; opacity: 0.6; }
+  .task-item.dragging { opacity: 0.4; }
+  .task-item.completing {
+    opacity: 0; max-height: 0;
+    padding-top: 0; padding-bottom: 0;
+    border-width: 0;
+  }
+
+  .task-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .task-label { flex: 1; }
+  .task-label.done { text-decoration: line-through; color: var(--text-tertiary); }
+
+  .complete-btn {
+    background: none;
+    border: 0.5px solid var(--border-md);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; width: 18px; height: 18px; flex-shrink: 0;
+    color: var(--text-tertiary);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .complete-btn:hover {
+    background: var(--bg-success);
+    border-color: var(--border-success);
+    color: var(--text-success);
+  }
+
+  .remove-task {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-tertiary); display: flex; align-items: center;
+    opacity: 0; padding: 1px; border-radius: 3px; transition: opacity 0.12s;
+  }
+  .task-item:hover .remove-task,
+  .completed-task-item:hover .remove-task { opacity: 1; }
+  .remove-task:hover { color: var(--text-danger); }
+
+  .add-task-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+
+  .add-task-input {
+    flex: 1; font-size: 12px; padding: 5px 8px;
+    border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-md);
+    background: var(--bg); color: var(--text); outline: none;
+    font-family: var(--font);
+  }
+  .add-task-input:focus { border-color: var(--border-strong); }
+  .add-task-input::placeholder { color: var(--text-tertiary); }
+
+  .add-task-btn {
+    padding: 5px 8px; font-size: 12px;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-md);
+    cursor: pointer; color: var(--text-secondary);
+    display: flex; align-items: center; transition: background 0.12s;
+  }
+  .add-task-btn:hover { background: var(--bg-tertiary); }
+
+  .completed-section { margin-top: 10px; overflow: hidden; }
+
+  .completed-divider {
+    display: flex; align-items: center; gap: 8px;
+    margin: 2px 0 8px; cursor: pointer; user-select: none;
+  }
+  .completed-divider-line { flex: 1; height: 0.5px; background: var(--border); }
+  .completed-divider-label {
+    font-size: 11px; color: var(--text-tertiary); font-weight: 500;
+    display: flex; align-items: center; gap: 4px; white-space: nowrap;
+  }
+  .completed-divider-label i { font-size: 12px; transition: transform 0.25s; }
+  .completed-section.collapsed .completed-divider-label i { transform: rotate(-90deg); }
+
+  .completed-tasks { display: flex; flex-direction: column; gap: 5px; }
+  .completed-tasks.hidden { display: none; }
+
+  .completed-task-item {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 8px;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 12px; opacity: 0.8;
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+    max-height: 60px; overflow: hidden;
+  }
+  .completed-task-item.removing {
+    opacity: 0; max-height: 0;
+    padding-top: 0; padding-bottom: 0; border-width: 0;
+  }
+
+  .check-icon {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--bg-success);
+    border: 0.5px solid var(--border-success);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--text-success);
+  }
+
+  .restore-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-tertiary); display: flex; align-items: center;
+    opacity: 0; padding: 1px; border-radius: 3px;
+    transition: opacity 0.12s; margin-left: auto;
+  }
+  .completed-task-item:hover .restore-btn { opacity: 1; }
+  .restore-btn:hover { color: var(--text-info); }
+
+  .empty-hint {
+    font-size: 12px; color: var(--text-tertiary);
+    text-align: center; padding: 6px 0;
+  }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--bg);
+    border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-lg);
+    padding: 24px; width: 320px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  .modal h3 { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 16px; }
+
+  .modal input {
+    width: 100%; font-size: 14px; padding: 9px 11px;
+    border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-md);
+    background: var(--bg); color: var(--text);
+    outline: none; margin-bottom: 14px;
+    font-family: var(--font);
+  }
+  .modal input:focus { border-color: var(--border-strong); }
+
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-btns button {
+    padding: 8px 18px; font-size: 13px;
+    border-radius: var(--radius-md); cursor: pointer;
+    border: 0.5px solid var(--border-md);
+    font-family: var(--font);
+  }
+  #modal-cancel { background: var(--bg-secondary); color: var(--text-secondary); }
+  #modal-confirm { background: var(--text); color: var(--bg); border-color: transparent; }
+
+  .save-toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--bg);
+    border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-md);
+    padding: 10px 16px; font-size: 13px;
+    color: var(--text-success);
+    display: flex; align-items: center; gap: 8px;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none; z-index: 200;
+  }
+  .save-toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><i class="ti ti-layout-kanban"></i> Team Task Dashboard</h1>
+  <span class="header-meta" id="last-saved"></span>
+  <button id="add-employee-btn"><i class="ti ti-user-plus" style="font-size:15px"></i> Add employee</button>
+</header>
+
+<main>
+  <div class="board" id="board"></div>
+</main>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>Add employee</h3>
+    <input type="text" id="modal-input" placeholder="Employee name" maxlength="40" />
+    <div class="modal-btns">
+      <button id="modal-cancel">Cancel</button>
+      <button id="modal-confirm">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-toast" id="save-toast">
+  <i class="ti ti-device-floppy" style="font-size:15px"></i> Saved
+</div>
+
+<script>
+const COLORS = [
+  { bg: '#E6F1FB', text: '#185FA5' },
+  { bg: '#E1F5EE', text: '#0F6E56' },
+  { bg: '#FAEEDA', text: '#854F0B' },
+  { bg: '#EEEDFE', text: '#3C3489' },
+  { bg: '#FAECE7', text: '#993C1D' },
+  { bg: '#FBEAF0', text: '#993556' },
+  { bg: '#EAF3DE', text: '#3B6D11' },
+  { bg: '#FCEBEB', text: '#A32D2D' },
+];
+const TASK_COLORS = ['#378ADD','#1D9E75','#BA7517','#7F77DD','#D85A30','#D4537E','#639922','#E24B4A'];
+
+const STORAGE_KEY = 'team-dashboard-v1';
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return {
+    employees: [
+      { id: 1, name: 'Alice Chen', tasks: ['Design system audit', 'Q3 roadmap'], completed: [] },
+      { id: 2, name: 'Marcus Webb', tasks: ['API integration', 'Code review'], completed: [] },
+      { id: 3, name: 'Sofia Torres', tasks: ['Client onboarding', 'Weekly report'], completed: [] },
+    ],
+    nextId: 10
+  };
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ employees, nextId }));
+    showToast();
+    updateLastSaved();
+  } catch(e) {}
+}
+
+let toastTimer;
+function showToast() {
+  const t = document.getElementById('save-toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function updateLastSaved() {
+  const el = document.getElementById('last-saved');
+  const now = new Date();
+  el.textContent = 'Saved ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+const stored = loadData();
+let employees = stored.employees;
+let nextId = stored.nextId || 10;
+let dragState = null;
+let collapsedCompleted = {};
+
+function initials(name) { return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(); }
+function getColor(id) { return COLORS[id % COLORS.length]; }
+function getTaskColor(idx) { return TASK_COLORS[idx % TASK_COLORS.length]; }
+
+function render() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  if (employees.length === 0) {
+    board.innerHTML = '<div class="empty-board"><i class="ti ti-users" style="font-size:32px;display:block;margin:0 auto 12px;opacity:0.3"></i>No employees yet — click "Add employee" to get started.</div>';
+    return;
+  }
+
+  employees.forEach(emp => {
+    const col = getColor(emp.id);
+    const card = document.createElement('div');
+    card.className = 'employee-card';
+    card.dataset.empId = emp.id;
+    const isCollapsed = collapsedCompleted[emp.id];
+    const hasCompleted = emp.completed && emp.completed.length > 0;
+
+    const activeTasks = (emp.tasks || []).map((t, i) => `
+      <div class="task-item" draggable="true" data-task="${encodeURIComponent(t)}" data-emp-id="${emp.id}">
+        <div class="task-dot" style="background:${getTaskColor(i)}"></div>
+        <span class="task-label">${escHtml(t)}</span>
+        <button class="complete-btn" data-emp-id="${emp.id}" data-task="${encodeURIComponent(t)}" title="Mark complete" aria-label="Mark ${t} complete">
+          <i class="ti ti-check" style="font-size:11px"></i>
+        </button>
+        <button class="remove-task" data-emp-id="${emp.id}" data-task="${encodeURIComponent(t)}" title="Remove" aria-label="Remove ${t}">
+          <i class="ti ti-x" style="font-size:12px"></i>
+        </button>
+      </div>`).join('');
+
+    const completedItems = (emp.completed || []).map(t => `
+      <div class="completed-task-item" data-task="${encodeURIComponent(t)}" data-emp-id="${emp.id}">
+        <div class="check-icon"><i class="ti ti-check" style="font-size:11px"></i></div>
+        <span class="task-label done">${escHtml(t)}</span>
+        <button class="restore-btn" data-emp-id="${emp.id}" data-task="${encodeURIComponent(t)}" title="Restore task" aria-label="Restore ${t}">
+          <i class="ti ti-rotate" style="font-size:12px"></i>
+        </button>
+        <button class="remove-task" data-emp-id="${emp.id}" data-task="${encodeURIComponent(t)}" data-from="completed" title="Remove" aria-label="Remove ${t}" style="margin-left:0">
+          <i class="ti ti-x" style="font-size:12px"></i>
+        </button>
+      </div>`).join('');
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="avatar" style="background:${col.bg};color:${col.text}">${initials(emp.name)}</div>
+        <span class="card-name" title="${escHtml(emp.name)}">${escHtml(emp.name)}</span>
+        <button class="delete-employee" data-emp-id="${emp.id}" title="Remove employee" aria-label="Remove ${emp.name}">
+          <i class="ti ti-x" style="font-size:14px"></i>
+        </button>
+      </div>
+      <div class="tasks" id="tasks-${emp.id}">
+        ${emp.tasks.length === 0 ? '<p class="empty-hint">No active tasks</p>' : activeTasks}
+      </div>
+      <div class="add-task-row">
+        <input class="add-task-input" placeholder="New task…" data-emp-id="${emp.id}" maxlength="60" />
+        <button class="add-task-btn" data-emp-id="${emp.id}" aria-label="Add task">
+          <i class="ti ti-plus" style="font-size:14px"></i>
+        </button>
+      </div>
+      ${hasCompleted ? `
+      <div class="completed-section${isCollapsed ? ' collapsed' : ''}" id="completed-section-${emp.id}">
+        <div class="completed-divider" data-emp-id="${emp.id}">
+          <div class="completed-divider-line"></div>
+          <div class="completed-divider-label">
+            <i class="ti ti-chevron-down"></i>
+            Completed (${emp.completed.length})
+          </div>
+          <div class="completed-divider-line"></div>
+        </div>
+        <div class="completed-tasks${isCollapsed ? ' hidden' : ''}" id="completed-tasks-${emp.id}">
+          ${completedItems}
+        </div>
+      </div>` : ''}
+    `;
+    board.appendChild(card);
+  });
+
+  bindEvents();
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function bindEvents() {
+  document.querySelectorAll('.delete-employee').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const id = parseInt(e.currentTarget.dataset.empId);
+      if (confirm('Remove this employee and all their tasks?')) {
+        employees = employees.filter(emp => emp.id !== id);
+        saveData(); render();
+      }
+    });
+  });
+
+  document.querySelectorAll('.complete-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const empId = parseInt(e.currentTarget.dataset.empId);
+      const task = decodeURIComponent(e.currentTarget.dataset.task);
+      const taskEl = e.currentTarget.closest('.task-item');
+      taskEl.classList.add('completing');
+      setTimeout(() => {
+        const emp = employees.find(emp => emp.id === empId);
+        if (emp) {
+          emp.tasks = emp.tasks.filter(t => t !== task);
+          if (!emp.completed) emp.completed = [];
+          if (!emp.completed.includes(task)) emp.completed.push(task);
+        }
+        saveData(); render();
+      }, 320);
+    });
+  });
+
+  document.querySelectorAll('.restore-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const empId = parseInt(e.currentTarget.dataset.empId);
+      const task = decodeURIComponent(e.currentTarget.dataset.task);
+      const itemEl = e.currentTarget.closest('.completed-task-item');
+      itemEl.classList.add('removing');
+      setTimeout(() => {
+        const emp = employees.find(emp => emp.id === empId);
+        if (emp) {
+          emp.completed = emp.completed.filter(t => t !== task);
+          if (!emp.tasks.includes(task)) emp.tasks.push(task);
+        }
+        saveData(); render();
+      }, 300);
+    });
+  });
+
+  document.querySelectorAll('.remove-task').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const empId = parseInt(e.currentTarget.dataset.empId);
+      const task = decodeURIComponent(e.currentTarget.dataset.task);
+      const fromCompleted = e.currentTarget.dataset.from === 'completed';
+      const emp = employees.find(emp => emp.id === empId);
+      if (emp) {
+        if (fromCompleted) emp.completed = emp.completed.filter(t => t !== task);
+        else emp.tasks = emp.tasks.filter(t => t !== task);
+      }
+      saveData(); render();
+    });
+  });
+
+  document.querySelectorAll('.completed-divider').forEach(div => {
+    div.addEventListener('click', () => {
+      const empId = parseInt(div.dataset.empId);
+      collapsedCompleted[empId] = !collapsedCompleted[empId];
+      const section = document.getElementById('completed-section-' + empId);
+      const tasksEl = document.getElementById('completed-tasks-' + empId);
+      if (collapsedCompleted[empId]) {
+        section.classList.add('collapsed');
+        tasksEl.classList.add('hidden');
+      } else {
+        section.classList.remove('collapsed');
+        tasksEl.classList.remove('hidden');
+      }
+    });
+  });
+
+  document.querySelectorAll('.add-task-btn').forEach(btn => {
+    btn.addEventListener('click', e => addTask(parseInt(e.currentTarget.dataset.empId), e.currentTarget));
+  });
+
+  document.querySelectorAll('.add-task-input').forEach(input => {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addTask(parseInt(input.dataset.empId), input);
+    });
+  });
+
+  document.querySelectorAll('.task-item').forEach(item => {
+    item.addEventListener('dragstart', e => {
+      dragState = { empId: parseInt(item.dataset.empId), task: decodeURIComponent(item.dataset.task) };
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+  });
+
+  document.querySelectorAll('.employee-card').forEach(card => {
+    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+    card.addEventListener('dragleave', e => { if (!card.contains(e.relatedTarget)) card.classList.remove('drag-over'); });
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      if (!dragState) return;
+      const targetId = parseInt(card.dataset.empId);
+      if (targetId === dragState.empId) return;
+      const src = employees.find(emp => emp.id === dragState.empId);
+      const tgt = employees.find(emp => emp.id === targetId);
+      if (!src || !tgt) return;
+      src.tasks = src.tasks.filter(t => t !== dragState.task);
+      if (!tgt.tasks.includes(dragState.task)) tgt.tasks.push(dragState.task);
+      dragState = null;
+      saveData(); render();
+    });
+  });
+}
+
+function addTask(empId, triggerEl) {
+  const row = triggerEl.closest ? triggerEl.closest('.add-task-row') : triggerEl.parentElement;
+  const input = row ? row.querySelector('.add-task-input') : null;
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  const emp = employees.find(e => e.id === empId);
+  if (emp && !emp.tasks.includes(val)) {
+    emp.tasks.push(val);
+    saveData(); render();
+    const newInput = document.querySelector(`.add-task-input[data-emp-id="${empId}"]`);
+    if (newInput) newInput.focus();
+  }
+}
+
+document.getElementById('add-employee-btn').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-input').value = '';
+  setTimeout(() => document.getElementById('modal-input').focus(), 50);
+});
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('open');
+});
+
+document.getElementById('modal-confirm').addEventListener('click', () => {
+  const name = document.getElementById('modal-input').value.trim();
+  if (!name) return;
+  employees.push({ id: nextId++, name, tasks: [], completed: [] });
+  document.getElementById('modal-overlay').classList.remove('open');
+  saveData(); render();
+});
+
+document.getElementById('modal-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('modal-confirm').click();
+  if (e.key === 'Escape') document.getElementById('modal-cancel').click();
+});
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').classList.remove('open');
+});
+
+if (localStorage.getItem(STORAGE_KEY)) updateLastSaved();
+render();
+</script>
+</body>
+</html>
